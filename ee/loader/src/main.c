@@ -952,12 +952,18 @@ int main(int argc, char *argv[])
         }
         // Fall back to GameID prefix
         if (!gameKnown && sGameID[0]) {
-            if (!strncmp(sGameID, "SLES", 4) || !strncmp(sGameID, "SCES", 4) ||
-                !strncmp(sGameID, "SLED", 4) || !strncmp(sGameID, "SCED", 4)) {
+            if (!strncmp(sGameID, "SLES", 4) || // Sony Licensed Europe
+                !strncmp(sGameID, "SCES", 4) || // Sony CE Europe
+                !strncmp(sGameID, "SLED", 4) || // Sony Licensed Europe Demo
+                !strncmp(sGameID, "SCED", 4)) { // Sony CE Europe Demo
                 gamePAL = 1; gameKnown = 1;
-            } else if (!strncmp(sGameID, "SLUS", 4) || !strncmp(sGameID, "SCUS", 4) ||
-                       !strncmp(sGameID, "SLPS", 4) || !strncmp(sGameID, "SCPS", 4) ||
-                       !strncmp(sGameID, "SCAJ", 4)) {
+            } else if (!strncmp(sGameID, "SLUS", 4) || // Sony Licensed US
+                       !strncmp(sGameID, "SCUS", 4) || // Sony CE US
+                       !strncmp(sGameID, "SLPS", 4) || // Sony Licensed PS Japan
+                       !strncmp(sGameID, "SLPM", 4) || // Sony Licensed PS Media Japan
+                       !strncmp(sGameID, "SCPS", 4) || // Sony CE PS Japan
+                       !strncmp(sGameID, "SCAJ", 4) || // Sony CE Asia Japan
+                       !strncmp(sGameID, "SLKA", 4)) { // Sony Licensed Korea
                 gamePAL = 0; gameKnown = 1;
             }
         }
