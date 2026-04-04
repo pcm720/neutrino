@@ -963,7 +963,10 @@ int main(int argc, char *argv[])
                        !strncmp(sGameID, "SLPM", 4) || // Sony Licensed PS Media Japan
                        !strncmp(sGameID, "SCPS", 4) || // Sony CE PS Japan
                        !strncmp(sGameID, "SCAJ", 4) || // Sony CE Asia Japan
-                       !strncmp(sGameID, "SLKA", 4)) { // Sony Licensed Korea
+                       !strncmp(sGameID, "SLAJ", 4) || // Sony Licensed Asia Japan
+                       !strncmp(sGameID, "SLKA", 4) || // Sony Licensed Korea
+                       !strncmp(sGameID, "PAPX", 4) || // Promotional Asia/Japan (promo, demos)
+                       !strncmp(sGameID, "SRPM", 4)) { // Special Retail Promo (limited/special editions)
                 gamePAL = 0; gameKnown = 1;
             }
         }
