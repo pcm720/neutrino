@@ -133,6 +133,8 @@ int _start(int argc, char *argv[])
 //-------------------------------------------------------------------------
 static void init_thread(void *args)
 {
+    int cdvdman_intr_ef, dummy;
+
     M_DEBUG("%s\n", __FUNCTION__);
 
     sceSifInitRpc(0);
@@ -140,6 +142,12 @@ static void init_thread(void *args)
     cdvdfsv_buf = sceGetFsvRbuf2(&cdvdfsv_size);
     cdvdfsv_sectors = cdvdfsv_size / 2048;
     cdvdfsv_startrpcthreads();
+
+    // Simplified poffloop: block until power-off event, then exit.
+    // Original also sends SIF cmd 0x80000012 to EE before exiting.
+    cdvdman_intr_ef = sceCdSC(CDSC_GET_INTRFLAG, &dummy);
+    ClearEventFlag(cdvdman_intr_ef, ~CDVDEF_POWER_OFF);
+    WaitEventFlag(cdvdman_intr_ef, CDVDEF_POWER_OFF, WEF_AND, NULL);
 
     ExitDeleteThread();
 }
@@ -275,8 +283,8 @@ static void *cbrpc_S596(int fno, void *buf, int size)
 
     if (fno == 1) {
         cdvdman_intr_ef = sceCdSC(CDSC_GET_INTRFLAG, &dummy);
-        ClearEventFlag(cdvdman_intr_ef, ~4);
-        WaitEventFlag(cdvdman_intr_ef, 4, WEF_AND, NULL);
+        ClearEventFlag(cdvdman_intr_ef, ~CDVDEF_FSV_S596);
+        WaitEventFlag(cdvdman_intr_ef, CDVDEF_FSV_S596, WEF_AND, NULL);
     }
 
     *(int *)buf = 1;

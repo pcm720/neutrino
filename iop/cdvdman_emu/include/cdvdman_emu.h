@@ -64,6 +64,14 @@ enum CDIOC_CODE {
 
 void *sceGetFsvRbuf2(int *size);
 
+// Bits of the cdvdman interrupt event flag (returned by CDSC_GET_INTRFLAG)
+#define CDVDEF_MAN_UNLOCKED  0x0001 // cdvdman read lock released
+#define CDVDEF_POWER_OFF     0x0002 // hardware power-off interrupt received
+#define CDVDEF_FSV_S596      0x0004 // CDVDFSV S596 RPC sync
+#define CDVDEF_STM_DONE      0x0008 // streaming read done
+#define CDVDEF_READ_END      0x1000 // accurate reads timing event
+#define CDVDEF_CB_DONE       0x2000 // callback completed
+
 // Codes for use with sceCdSC()
 #define CDSC_GET_DEBUG_STATUS 0xFFFFFFF0 // Get debug status flag.
 #define CDSC_GET_INTRFLAG     0xFFFFFFF5 // Get interrupt flag.
