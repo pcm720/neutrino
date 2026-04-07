@@ -41,13 +41,13 @@ static void * hooked_AllocSysMemory(int mode, int size, void *ptr)
 int _start(int argc, char **argv)
 {
     if (argc >= 1) {
-        char c = argv[1][0] - '0';
+        unsigned char c = argv[1][0] - '0';
         if (c <= 9)
             extra_size = c * 256;
     }
 
     if (argc >= 2) {
-        char c = argv[2][0] - '0';
+        unsigned char c = argv[2][0] - '0';
         if (c <= 9)
             gamefix = c;
     }
