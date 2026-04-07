@@ -23,6 +23,7 @@ struct SModule {
     int           arg_len;
     char         *args;
     unsigned int  env;
+    int           iLoadOrder; // 0..40, default 20
 };
 
 struct SModList {

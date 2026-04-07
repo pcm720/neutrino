@@ -342,7 +342,7 @@ static int setup_dvd_iso(const char *path, off_t *out_iso_size,
  * Patches IOPRP.img and installs all EE-env modules.
  * Returns a pointer to the end of the written module data, or NULL on error.
  */
-static uint8_t *build_irx_table(int dvd_active, struct SModule *mod_fakemod)
+static uint8_t *build_irx_table(int dvd_active)
 {
     irxtab_t  *irxtable;
     irxptr_t  *irxptr_tab;
@@ -391,31 +391,19 @@ static uint8_t *build_irx_table(int dvd_active, struct SModule *mod_fakemod)
     irxptr_tab++;
     irxtable->count++;
 
-    // FHI BD — must be loaded before cdvdman (EE side)
-    struct SModule *mod_fhi_bd = modlist_get_by_name(&drv.mod, "fhi_bd.irx");
-    if (mod_fhi_bd != NULL) {
-        irxptr = module_install(mod_fhi_bd, irxptr, irxptr_tab++);
-        irxtable->count++;
-    }
-
-    // All other EE modules without a special function
-    for (i = 0; i < drv.mod.count; i++) {
-        struct SModule *pm = &drv.mod.mod[i];
-        if ((pm->env & MOD_ENV_EE) && (pm->sIOPRP == NULL) && pm != mod_fhi_bd && ((pm->sFunc == NULL) || (
-               strcmp(pm->sFunc, "FAKEMOD") != 0
-            && strcmp(pm->sFunc, "IMGDRV") != 0
-            && strcmp(pm->sFunc, "UDNL") != 0
-            )))
-        {
+    // IOP modules in load order (IMGDRV=0 and UDNL=1 already installed above)
+    for (int order = 0; order <= 40; order++) {
+        for (i = 0; i < drv.mod.count; i++) {
+            struct SModule *pm = &drv.mod.mod[i];
+            if (!(pm->env & MOD_ENV_EE) || pm->sIOPRP != NULL)
+                continue;
+            if (pm->sFunc != NULL && (strcmp(pm->sFunc, "IMGDRV") == 0 || strcmp(pm->sFunc, "UDNL") == 0))
+                continue;
+            if (pm->iLoadOrder != order)
+                continue;
             irxptr = module_install(pm, irxptr, irxptr_tab++);
             irxtable->count++;
         }
-    }
-
-    // FAKEMOD last, to prevent it from faking our own modules
-    if (drv.fake.count > 0) {
-        irxptr = module_install(mod_fakemod, irxptr, irxptr_tab++);
-        irxtable->count++;
     }
 
     return irxptr;
@@ -761,9 +749,6 @@ int main(int argc, char *argv[])
     // Load EE_CORE settings
     struct ee_core_data *set_ee_core = module_get_settings(&mod_ee_core);
 
-    // FAKEMOD optional module — only needed when modules are to be faked
-    struct SModule *mod_fakemod = modlist_get_by_func(&drv.mod, "FAKEMOD");
-
     // Detect active FHI backing store and zero its settings struct
     int fhi_active = (fhi_config_init(&drv.mod) == 0);
 
@@ -997,7 +982,7 @@ int main(int argc, char *argv[])
     if (drv.fake.count > 0) {
         size_t stringbase = 0;
 
-        if (set_fakemod == NULL || mod_fakemod == NULL) {
+        if (set_fakemod == NULL) {
             printf("ERROR: fakemod not found!\n");
             return -1;
         }
@@ -1048,7 +1033,7 @@ int main(int argc, char *argv[])
     /*
      * Build the IRX module table in EE memory
      */
-    uint8_t *irxptr_end = build_irx_table(sDVDFile != NULL, mod_fakemod);
+    uint8_t *irxptr_end = build_irx_table(sDVDFile != NULL);
     if (irxptr_end == NULL)
         return -1;
 

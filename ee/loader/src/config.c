@@ -136,6 +136,9 @@ int modlist_add(struct SModList *ml, toml_datum_t t)
     toml_string_in_overwrite(t, "ioprp", &m->sIOPRP);
     toml_string_in_overwrite(t, "func",  &m->sFunc);
 
+    m->iLoadOrder = 20;
+    toml_int_in_overwrite(t, "load_order", &m->iLoadOrder);
+
     arr = toml_get(t, "args");
     if (arr.type == TOML_ARRAY) {
         int i;
