@@ -154,9 +154,10 @@ UDPRDMA uses Go-Back-N with:
 
 1. Send packets with incrementing seq_nr
 2. Set FIN flag on final packet
-3. Wait for ACK or NACK
+3. Wait for final ACK (confirms receiver got FIN)
 4. On NACK: retransmit from indicated seq_nr
-5. On timeout: retransmit from last ACK'd seq_nr
+5. On timeout: retransmit from earliest unacknowledged seq_nr
+6. Retry up to MAX_RETRIES times before giving up
 
 ### Receiver Behavior
 
@@ -272,6 +273,8 @@ The window ACK is distinguished from a final ACK by the absence of FIN — the s
 
 ## Packet Loss Recovery
 
+### Mid-stream packet lost (out-of-order triggers immediate NACK)
+
 ```
 Sender                          Receiver
    |                                |
@@ -290,6 +293,23 @@ Sender                          Receiver
    |                                |
    |<--------- DATA [ACK] ----------|  seq_nr_ack=N+K
 ```
+
+### Final (FIN) packet lost (sender retransmits on ACK timeout)
+
+```
+Sender                          Receiver
+   |                                |
+   |-- DATA [chunk 0] ------------->|  seq=N
+   |-- DATA [chunk 1, FIN LOST] -X  |  seq=N+1
+   |                                |
+   |   (100ms final-ACK timeout)    |
+   |                                |
+   |-- DATA [chunk 1, FIN] -------->|  seq=N+1 (retransmit)
+   |                                |
+   |<--------- DATA [ACK] ----------|  seq_nr_ack=N+1
+```
+
+After sending the FIN packet, the sender waits for a final ACK. If no ACK is received within RETX_TIMEOUT, it retransmits from the earliest unacknowledged packet. This ensures the receiver always confirms receipt of the complete transfer.
 
 ## Timing Constants
 
