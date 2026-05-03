@@ -387,31 +387,30 @@ static int cdrom_dread(iop_file_t *f, iox_dirent_t *dirent)
     M_DEBUG("%s fh->lsn=%lu\n", __FUNCTION__, fh->lsn);
 
     sceCdDiskReady(0);
-    if ((r = sceCdRead_internal(fh->lsn, 1, cdvdman_fs_buf, NULL, ECS_IOOPS)) == 1) {
-        sceCdSync(0);
+    while (sceCdRead_internal(fh->lsn, 1, cdvdman_fs_buf, NULL, ECS_IOOPS) == 0)
+        DelayThread(10000);
+    sceCdSync(0);
 
-        do {
-            r = 0;
-            tocEntryPointer = (struct dirTocEntry *)&cdvdman_fs_buf[fh->position];
-            if (tocEntryPointer->length == 0)
-                break;
+    do {
+        r = 0;
+        tocEntryPointer = (struct dirTocEntry *)&cdvdman_fs_buf[fh->position];
+        if (tocEntryPointer->length == 0)
+            break;
 
-            fh->position += tocEntryPointer->length;
-            r = 1;
-        } while (tocEntryPointer->filenameLength == 1);
+        fh->position += tocEntryPointer->length;
+        r = 1;
+    } while (tocEntryPointer->filenameLength == 1);
 
-        mode = 0x2124;
-        if (tocEntryPointer->fileProperties & 2)
-            mode = 0x116d;
+    mode = 0x2124;
+    if (tocEntryPointer->fileProperties & 2)
+        mode = 0x116d;
 
-        dirent->stat.mode = mode;
-        dirent->stat.size = tocEntryPointer->fileSize;
-        strncpy(dirent->name, tocEntryPointer->filename, tocEntryPointer->filenameLength);
-        dirent->name[tocEntryPointer->filenameLength] = '\0';
+    dirent->stat.mode = mode;
+    dirent->stat.size = tocEntryPointer->fileSize;
+    strncpy(dirent->name, tocEntryPointer->filename, tocEntryPointer->filenameLength);
+    dirent->name[tocEntryPointer->filenameLength] = '\0';
 
-        M_DEBUG("%s r=%d mode=%04x name=%s\n", __FUNCTION__, r, (int)mode, dirent->name);
-    } else
-        M_DEBUG("%s r=%d\n", __FUNCTION__, r);
+    M_DEBUG("%s r=%d mode=%04x name=%s\n", __FUNCTION__, r, (int)mode, dirent->name);
 
     SignalSema(cdrom_sema);
 

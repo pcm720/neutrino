@@ -95,8 +95,8 @@ lbl_startlocate:
     }
 
     while (tocLength > 0) {
-        if (sceCdRead_internal(tocLBA, 1, cdvdman_buf, NULL, ECS_SEARCHFILE) == 0)
-            return NULL;
+        while (sceCdRead_internal(tocLBA, 1, cdvdman_buf, NULL, ECS_SEARCHFILE) == 0)
+            DelayThread(10000);
         sceCdSync(0);
         //M_DEBUG("%s tocLBA read done\n", __FUNCTION__);
 
@@ -209,7 +209,8 @@ static void cdvdman_searchfile_init(void)
     cdvdman_searchfilesema = CreateSema(&smp);
 
     // Read the volume descriptor
-    sceCdRead_internal(16, 1, cdvdman_buf, NULL, ECS_SEARCHFILE);
+    while (sceCdRead_internal(16, 1, cdvdman_buf, NULL, ECS_SEARCHFILE) == 0)
+        DelayThread(10000);
     sceCdSync(0);
 
     struct dirTocEntry *tocEntryPointer = (struct dirTocEntry *)&cdvdman_buf[0x9c];
@@ -222,7 +223,8 @@ static void cdvdman_searchfile_init(void)
         unsigned int layer1_start;
         sceCdReadDvdDualInfo(&on_dual, &layer1_start);
         if (on_dual) {
-            sceCdRead_internal(layer1_start + 16, 1, cdvdman_buf, NULL, ECS_SEARCHFILE);
+            while (sceCdRead_internal(layer1_start + 16, 1, cdvdman_buf, NULL, ECS_SEARCHFILE) == 0)
+                DelayThread(10000);
             sceCdSync(0);
             tocEntryPointer = (struct dirTocEntry *)&cdvdman_buf[0x9c];
             layer_info[1].rootDirtocLBA = layer1_start + tocEntryPointer->fileLBA;
