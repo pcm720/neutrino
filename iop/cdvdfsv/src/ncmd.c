@@ -267,11 +267,7 @@ static inline int cdvd_readee(RpcCdvd_t *r)
 
             if (size_64bb > 0) {
                 bytesent += size_64bb;
-                *((u32 *)&curlsn_buf[0]) = bytesent;
-                sysmemSendEE2((void *)(fsvRbuf + readee.b1len), eeaddr_64b, size_64bb, (void *)curlsn_buf, r->eeaddr2, 16);
-            } else {
-                *((u32 *)&curlsn_buf[0]) = bytesent;
-                sysmemSendEE((void *)curlsn_buf, r->eeaddr2, 16);
+                sysmemSendEE((void *)(fsvRbuf + readee.b1len), eeaddr_64b, size_64bb);
             }
 
             sectors_to_read -= nsectors;
@@ -285,7 +281,7 @@ static inline int cdvd_readee(RpcCdvd_t *r)
             memcpy((void *)readee.buf2, (void *)(fsvRbuf + size_64b - readee.b2len), readee.b2len);
     }
 
-    return bytesent;
+    return nbytes;
 }
 #endif
 //-------------------------------------------------------------------------
