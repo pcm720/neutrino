@@ -173,7 +173,7 @@ static inline int cdvd_readee(RpcCdvd_t *r)
     u8 curlsn_buf[16];
     u32 nbytes, nsectors, sectors_to_read, size_64b, size_64bb, bytesent, temp;
     u16 sector_size;
-    int flag_64b, fsverror;
+    int flag_64b;
     void *fsvRbuf = (void *)cdvdfsv_buf;
     void *eeaddr_64b, *eeaddr2_64b;
     cdvdfsv_readee_t readee;
@@ -250,14 +250,8 @@ static inline int cdvd_readee(RpcCdvd_t *r)
                 temp = nsectors;
             }
 
-            if (sceCdRead(r->lsn, temp, (void *)fsvRbuf, NULL) == 0) {
-                if (sceCdGetError() == SCECdErNO) {
-                    fsverror = SCECdErREADCF;
-                    sceCdSC(CDSC_SET_ERROR, &fsverror);
-                }
-
-                return bytesent;
-            }
+            while (sceCdRead(r->lsn, temp, (void *)fsvRbuf, NULL) == 0)
+                DelayThread(10000);
             sceCdSync(0);
 
             size_64b = nsectors * sector_size;
@@ -336,33 +330,28 @@ static inline int cdvd_Stsubcmdcall(void *buf)
 
 static inline int cdvd_readiopm(RpcCdvd_t *r)
 {
-    int rv, fsverror;
     u32 readpos;
 
     M_DEBUG("%s\n", __FUNCTION__);
 
-    rv = sceCdRead(r->lsn, r->sectors, r->buf, NULL);
+    while (sceCdRead(r->lsn, r->sectors, r->buf, NULL) == 0)
+        DelayThread(10000);
+
     while (sceCdSync(1)) {
         readpos = sceCdGetReadPos();
         sysmemSendEE(&readpos, r->eeaddr2, sizeof(readpos));
         DelayThread(8000);
     }
 
-    if (rv == 0) {
-        if (sceCdGetError() == SCECdErNO) {
-            fsverror = SCECdErREADCFR;
-            sceCdSC(CDSC_SET_ERROR, &fsverror);
-        }
-    }
-
-    return rv;
+    return 1;
 }
 
 //-------------------------------------------------------------------------
 static inline int cdvd_readchain(RpcCdvdchain_t *ch)
 {
-    int i, fsverror;
+    int i;
     u32 nsectors, tsectors, lsn, addr, readpos;
+    RpcCdvdchain_t *ch_base = ch; // entry [65] holds the readpos EE address
 
     M_DEBUG("%s\n", __FUNCTION__);
 
@@ -376,14 +365,8 @@ static inline int cdvd_readchain(RpcCdvdchain_t *ch)
         addr = (u32)ch->buf & 0xfffffffc;
 
         if ((u32)ch->buf & 1) { // IOP addr
-            if (sceCdRead(lsn, tsectors, (void *)addr, NULL) == 0) {
-                if (sceCdGetError() == SCECdErNO) {
-                    fsverror = SCECdErREADCFR;
-                    sceCdSC(CDSC_SET_ERROR, &fsverror);
-                }
-
-                return 0;
-            }
+            while (sceCdRead(lsn, tsectors, (void *)addr, NULL) == 0)
+                DelayThread(10000);
             sceCdSync(0);
 
             readpos += tsectors * 2048;
@@ -391,14 +374,8 @@ static inline int cdvd_readchain(RpcCdvdchain_t *ch)
             while (tsectors > 0) {
                 nsectors = (tsectors > cdvdfsv_sectors) ? cdvdfsv_sectors : tsectors;
 
-                if (sceCdRead(lsn, nsectors, cdvdfsv_buf, NULL) == 0) {
-                    if (sceCdGetError() == SCECdErNO) {
-                        fsverror = SCECdErREADCF;
-                        sceCdSC(CDSC_SET_ERROR, &fsverror);
-                    }
-
-                    return 0;
-                }
+                while (sceCdRead(lsn, nsectors, cdvdfsv_buf, NULL) == 0)
+                    DelayThread(10000);
                 sceCdSync(0);
                 sysmemSendEE(cdvdfsv_buf, (void *)addr, nsectors * 2048);
 
