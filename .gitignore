@@ -8,6 +8,8 @@
 *.raw
 *.yaml
 *.iso
+*.img
+*.7z
 pcsx2*
 
 obj/
@@ -15,10 +17,8 @@ obj.*/
 
 ee/loader/irx/
 ee/loader/version.txt
-iop/patches/
-iop/fileio/
-lab/cdvd/ee/ioprp/
-lab/cdvd/iso
+lab/iso/
+lab/ioprp/
 releases/
 
 .*
