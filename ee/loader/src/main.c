@@ -1174,6 +1174,12 @@ int main(int argc, char *argv[])
     for (int i = 0; i < ee_core_argc; i++) {
         printf("  - [%d] %s\n", i, ee_core_argv[i]);
     }
+    if (set_ee_core->CheatList != NULL) {
+        printf("- cheats:\n");
+        for (int *cht = set_ee_core->CheatList; *cht != 0; cht+=2) {
+            printf("  - 0x%08x 0x%08x\n", cht[0], cht[1]);
+        }
+    }
     printf("------------------------------\n");
 
     /*
