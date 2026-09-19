@@ -11,6 +11,7 @@
  */
 
 #include "irx_imports.h"
+#include "fhi_fileid_config.h"
 #include "mprintf.h"
 
 #define MODNAME "dvrfile_fhi"

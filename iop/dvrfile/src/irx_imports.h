@@ -13,6 +13,4 @@
 #include <speedregs.h>
 #include <errno.h>
 
-#include "fhi_fileid_config.h"
-
 #endif
